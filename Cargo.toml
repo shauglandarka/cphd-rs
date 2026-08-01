@@ -1,0 +1,9 @@
+[package]
+name = "cphd_rs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+memmap2 = "0.9.11"
+quick-xml = { version = "0.41.0", features = ["serialize"] }
+serde = { version = "1.0.229", features = ["derive"] }
