@@ -3,11 +3,13 @@ pub mod collection_id;
 pub mod global;
 pub mod scene_coordinates;
 pub mod data;
+pub mod channel;
 
 use collection_id::CollectionId;
 use global::Global;
 use scene_coordinates::SceneCoordinates;
 use data::Data;
+use channel::Channel;
 
 use serde;
 use serde::{Deserialize, Serialize};
@@ -29,8 +31,8 @@ pub struct CphdMeta {
     #[serde(rename = "Data")]
     pub data: Data,
  
-//    #[serde(rename = "Channel")]
-//    pub channel: Channel,
+    #[serde(rename = "Channel")]
+    pub channel: Channel,
 //
 //    #[serde(rename = "PVP")]
 //    pub pvp: Pvp,
@@ -63,6 +65,13 @@ pub struct CphdMeta {
 //    pub match_info: Option<MatchInfo>
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Parameter {
+    #[serde(rename = "@name")]
+    pub name: String,
+    #[serde(rename = "$value")]
+    pub value: String,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Iarp {

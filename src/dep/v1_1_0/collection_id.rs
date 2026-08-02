@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use super::{ModeType, CollectType};
+use super::{ModeType, CollectType, Parameter};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CollectionId {
@@ -40,13 +40,6 @@ pub struct RadarMode {
     pub mode_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Parameter {
-    #[serde(rename = "@name")]
-    pub name: String,
-    #[serde(rename = "$value")]
-    pub value: String,
-}
 
 fn default_classification() -> String {
     "UNCLASSIFIED".to_string()
