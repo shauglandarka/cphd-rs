@@ -1,5 +1,5 @@
+use super::scene_coordinates::ImageArea;
 use serde::{Deserialize, Serialize};
-use super::scene_coordinates::{ImageArea};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Channel {
@@ -36,7 +36,11 @@ pub struct ChannelParameters {
     #[serde(rename = "SRPFixed")]
     pub srp_fixed: bool,
 
-    #[serde(rename = "SignalNormal", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "SignalNormal",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub signal_normal: Option<bool>,
 
     #[serde(rename = "Polarization")]
@@ -60,10 +64,18 @@ pub struct ChannelParameters {
     #[serde(rename = "TOASaved")]
     pub toa_saved: f64,
 
-    #[serde(rename = "TOAExtended", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "TOAExtended",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub toa_extended: Option<ToaExtended>,
 
-    #[serde(rename = "LFMEclipse", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "LFMEclipse",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub lfm_eclipse: Option<LfmEclipse>,
 
     #[serde(rename = "DwellTimes")]
@@ -78,16 +90,32 @@ pub struct ChannelParameters {
     #[serde(rename = "TxRcv", skip_serializing_if = "Option::is_none", default)]
     pub tx_rcv: Option<ChannelTxRcv>,
 
-    #[serde(rename = "TgtRefLevel", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "TgtRefLevel",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub tgt_ref_level: Option<TgtRefLevel>,
 
-    #[serde(rename = "NoiseLevel", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "NoiseLevel",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub noise_level: Option<NoiseLevel>,
 
-    #[serde(rename = "FxNoiseProfile", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "FxNoiseProfile",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub fx_noise_profile: Option<FxNoiseProfile>,
 
-    #[serde(rename = "AddedParameters", skip_serializing_if = "Option::is_none", default)]
+    #[serde(
+        rename = "AddedParameters",
+        skip_serializing_if = "Option::is_none",
+        default
+    )]
     pub added_parameters: Option<AddedParameters>,
 }
 
@@ -159,7 +187,6 @@ pub struct DwellTimes {
     #[serde(rename = "UseDTA", skip_serializing_if = "Option::is_none", default)]
     pub use_dta: Option<bool>,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ChannelAntenna {
@@ -283,6 +310,9 @@ mod tests {
         assert_eq!(params.fx_c, 9.64999987200000000E+09);
         assert_eq!(params.fx_bw, 200000000.0);
         assert_eq!(params.toa_saved, 2.84479166666666692E-05);
-        assert_eq!(params.toa_extended.as_ref().unwrap().toa_ext_saved, 2.84479166666666692E-05);
+        assert_eq!(
+            params.toa_extended.as_ref().unwrap().toa_ext_saved,
+            2.84479166666666692E-05
+        );
     }
 }

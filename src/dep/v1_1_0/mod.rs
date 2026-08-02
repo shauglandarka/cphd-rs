@@ -1,40 +1,40 @@
-pub mod file_hdr;
-pub mod collection_id;
-pub mod global;
-pub mod scene_coordinates;
-pub mod data;
 pub mod channel;
-pub mod pvp;
+pub mod collection_id;
+pub mod data;
 pub mod dwell;
+pub mod file_hdr;
+pub mod global;
+pub mod pvp;
+pub mod reference_geometry;
+pub mod scene_coordinates;
 
-use collection_id::CollectionId;
-use global::Global;
-use scene_coordinates::SceneCoordinates;
-use data::Data;
 use channel::Channel;
-use pvp::Pvp;
+use collection_id::CollectionId;
+use data::Data;
 use dwell::Dwell;
+use global::Global;
+use pvp::Pvp;
+use scene_coordinates::SceneCoordinates;
 
 use serde;
 use serde::{Deserialize, Serialize};
-    
+
 /// Represents the high-level metadata and branch tracking for the CPHD XML block.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename = "CPHD")]
 pub struct CphdMeta {
- 
     #[serde(rename = "CollectionID")]
     pub collection_id: CollectionId,
- 
+
     #[serde(rename = "Global")]
     pub global: Global,
- 
+
     #[serde(rename = "SceneCoordinates")]
     pub scene_coordinates: SceneCoordinates,
- 
+
     #[serde(rename = "Data")]
     pub data: Data,
- 
+
     #[serde(rename = "Channel")]
     pub channel: Channel,
 
@@ -43,30 +43,30 @@ pub struct CphdMeta {
 
     #[serde(rename = "Dwell")]
     pub dwell: Dwell,
-//
-//    #[serde(rename = "ReferenceGeometry")]
-//    pub reference_geometry: ReferenceGeometry,
-//
-//    #[serde(rename = "SupportArray")]
-//    pub support_array: Option<SupportArray>,
-//
-//    #[serde(rename = "Antenna")]
-//    pub antenna: Option<Antenna>,
-//
-//    #[serde(rename = "TxRcv")]
-//    pub tx_rcv: Option<TxRcv>,
-//
-//    #[serde(rename = "ErrorParameters")]
-//    pub error_parameters: Option<ErrorParameters>,
-//
-//    #[serde(rename = "ProductInfo")]
-//    pub product_info: Option<ProductInfo>,
-//
-//    #[serde(rename = "GeoInfo")]
-//    pub geo_info: Option<GeoInfo>,
-//
-//    #[serde(rename = "MatchInfo")]
-//    pub match_info: Option<MatchInfo>
+    //
+    //    #[serde(rename = "ReferenceGeometry")]
+    //    pub reference_geometry: ReferenceGeometry,
+    //
+    //    #[serde(rename = "SupportArray")]
+    //    pub support_array: Option<SupportArray>,
+    //
+    //    #[serde(rename = "Antenna")]
+    //    pub antenna: Option<Antenna>,
+    //
+    //    #[serde(rename = "TxRcv")]
+    //    pub tx_rcv: Option<TxRcv>,
+    //
+    //    #[serde(rename = "ErrorParameters")]
+    //    pub error_parameters: Option<ErrorParameters>,
+    //
+    //    #[serde(rename = "ProductInfo")]
+    //    pub product_info: Option<ProductInfo>,
+    //
+    //    #[serde(rename = "GeoInfo")]
+    //    pub geo_info: Option<GeoInfo>,
+    //
+    //    #[serde(rename = "MatchInfo")]
+    //    pub match_info: Option<MatchInfo>
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -80,20 +80,17 @@ pub struct Parameter {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Iarp {
     #[serde(rename = "ECF")]
-    pub ecf: Ecf,
-
+    pub ecf: Vector3D,
     #[serde(rename = "LLH")]
     pub llh: Llh,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct Ecf {
+pub struct Vector3D {
     #[serde(rename = "X")]
     pub x: f64,
-
     #[serde(rename = "Y")]
     pub y: f64,
-
     #[serde(rename = "Z")]
     pub z: f64,
 }
@@ -102,10 +99,8 @@ pub struct Ecf {
 pub struct Llh {
     #[serde(rename = "Lat")]
     pub lat: f64,
-
     #[serde(rename = "Lon")]
     pub lon: f64,
-
     #[serde(rename = "HAE")]
     pub hae: f64,
 }
@@ -127,7 +122,6 @@ pub struct Poly2D {
     #[serde(rename = "Coef")]
     pub coef: Vec<Coef>,
 }
-
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Coef {
@@ -228,7 +222,6 @@ pub enum Frame {
     #[serde(rename = "RIC_ECI")]
     RicEci,
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -628,9 +621,12 @@ mod tests {
         // Test Global sub-struct parsing
         assert_eq!(meta.global.domain_type, DomainType::Fx);
         assert_eq!(meta.global.sgn, 1);
-        assert_eq!(meta.global.timeline.collection_start, "2021-12-29T05:36:31.000000Z");
+        assert_eq!(
+            meta.global.timeline.collection_start,
+            "2021-12-29T05:36:31.000000Z"
+        );
         assert_eq!(meta.global.fx_band.fx_min, 9549999872.0);
-        
+
         let tropo = meta.global.tropo_parameters.as_ref().unwrap();
         assert_eq!(tropo.n0, 1.0);
         assert_eq!(tropo.ref_height, RefHeight::Iarp);

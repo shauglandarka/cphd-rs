@@ -1,5 +1,5 @@
+use super::Poly2D;
 use serde::{Deserialize, Serialize};
-use super::{Poly2D};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Dwell {
@@ -69,7 +69,10 @@ mod tests {
         assert_eq!(dwell.cod_time[0].cod_time_poly.order1, 1);
         assert_eq!(dwell.cod_time[0].cod_time_poly.order2, 0);
         assert_eq!(dwell.cod_time[0].cod_time_poly.coef.len(), 2);
-        assert_eq!(dwell.cod_time[0].cod_time_poly.coef[0].value, 1.9918877030854505);
+        assert_eq!(
+            dwell.cod_time[0].cod_time_poly.coef[0].value,
+            1.9918877030854505
+        );
 
         assert_eq!(dwell.num_dwell_times, 1);
         assert_eq!(dwell.dwell_time.len(), 1);
@@ -77,6 +80,9 @@ mod tests {
         assert_eq!(dwell.dwell_time[0].dwell_time_poly.order1, 1);
         assert_eq!(dwell.dwell_time[0].dwell_time_poly.order2, 1);
         assert_eq!(dwell.dwell_time[0].dwell_time_poly.coef.len(), 4);
-        assert_eq!(dwell.dwell_time[0].dwell_time_poly.coef[0].value, 1.8313787558909327);
+        assert_eq!(
+            dwell.dwell_time[0].dwell_time_poly.coef[0].value,
+            1.8313787558909327
+        );
     }
 }

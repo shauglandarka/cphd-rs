@@ -76,11 +76,10 @@ pub struct IonoParameters {
     pub f2_height: Option<f64>,
 }
 
-
 #[cfg(test)]
-    mod tests {
+mod tests {
     use super::*;
-    
+
     #[test]
     fn test_deserialize_global() {
         let xml_str = r#"
@@ -113,7 +112,10 @@ pub struct IonoParameters {
 
         assert_eq!(global.domain_type, DomainType::Fx);
         assert_eq!(global.sgn, 1);
-        assert_eq!(global.timeline.collection_start, "2021-12-29T05:36:31.000000Z");
+        assert_eq!(
+            global.timeline.collection_start,
+            "2021-12-29T05:36:31.000000Z"
+        );
         assert_eq!(global.timeline.tx_time1, 0.0);
         assert_eq!(global.timeline.tx_time2, 3.97947882666666652);
         assert_eq!(global.fx_band.fx_min, 9549999872.0);
@@ -129,6 +131,3 @@ pub struct IonoParameters {
         assert_eq!(iono.tecv, 0.0);
     }
 }
-
-
-

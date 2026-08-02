@@ -1,32 +1,32 @@
 use std::collections::HashMap;
-use std::str;
-use std::io::{self, Error, ErrorKind};
 use std::fmt::Display;
+use std::io::{self, Error, ErrorKind};
+use std::str;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FileHeader {
     // CPHD version (e.g., "1.0")
-    pub version: String,                     
+    pub version: String,
     // Size of the XML block in bytes
-    pub xml_block_size: u64,                
+    pub xml_block_size: u64,
     // Offset to the XML block
-    pub xml_block_byte_offset: u64,        
+    pub xml_block_byte_offset: u64,
     // Optional: Size of the Support block
-    pub support_block_size: Option<u64>,     
+    pub support_block_size: Option<u64>,
     // Optional: Offset to the Support block
     pub support_block_byte_offset: Option<u64>,
     // Size of the PVP block in bytes
-    pub pvp_block_size: u64,                
+    pub pvp_block_size: u64,
     // Offset to the PVP block
-    pub pvp_block_byte_offset: u64,        
+    pub pvp_block_byte_offset: u64,
     // Size of the Signal block in bytes
-    pub signal_block_size: u64,            
+    pub signal_block_size: u64,
     // Offset to the Signal block
-    pub signal_block_byte_offset: u64,     
+    pub signal_block_byte_offset: u64,
     // Product classification (default: "UNCLASSIFIED")
-    pub classification: String,            
+    pub classification: String,
     // Product release info (default: "UNRESTRICTED")
-    pub release_info: String,             
+    pub release_info: String,
     // Additional optional KVPs
     pub kvp_metadata: Option<HashMap<String, String>>,
 }
@@ -41,15 +41,15 @@ impl Display for FileHeader {
 
 pub fn parse_file_header(mmap: &[u8]) -> io::Result<FileHeader> {
     // Slice the first 1024 bytes based on the file layout offset
-    let header_slice = mmap.get(..1024)
+    let header_slice = mmap
+        .get(..1024)
         .ok_or_else(|| Error::new(ErrorKind::UnexpectedEof, "File too short for header"))?;
-    
-    let raw_str = str::from_utf8(header_slice)
-        .map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
+
+    let raw_str =
+        str::from_utf8(header_slice).map_err(|e| Error::new(ErrorKind::InvalidData, e))?;
 
     // Trim trailing null bytes (\0), form feeds (\x0c), and whitespace padding
     let header_str = raw_str.trim_end_matches(['\0', '\x0c', ' ', '\n', '\r']);
-
 
     let mut version = String::new();
     let mut xml_block_size = 0;
@@ -82,11 +82,17 @@ pub fn parse_file_header(mmap: &[u8]) -> io::Result<FileHeader> {
 
             match key {
                 "XML_BLOCK_SIZE" => xml_block_size = value.parse().unwrap_or_default(),
-                "XML_BLOCK_BYTE_OFFSET" => xml_block_byte_offset = value.parse().unwrap_or_default(),
+                "XML_BLOCK_BYTE_OFFSET" => {
+                    xml_block_byte_offset = value.parse().unwrap_or_default()
+                }
                 "PVP_BLOCK_SIZE" => pvp_block_size = value.parse().unwrap_or_default(),
-                "PVP_BLOCK_BYTE_OFFSET" => pvp_block_byte_offset = value.parse().unwrap_or_default(),
+                "PVP_BLOCK_BYTE_OFFSET" => {
+                    pvp_block_byte_offset = value.parse().unwrap_or_default()
+                }
                 "SIGNAL_BLOCK_SIZE" => signal_block_size = value.parse().unwrap_or_default(),
-                "SIGNAL_BLOCK_BYTE_OFFSET" => signal_block_byte_offset = value.parse().unwrap_or_default(),
+                "SIGNAL_BLOCK_BYTE_OFFSET" => {
+                    signal_block_byte_offset = value.parse().unwrap_or_default()
+                }
                 "CLASSIFICATION" => classification = value.to_string(),
                 "RELEASE_INFO" => release_info = value.to_string(),
                 other => {
@@ -99,7 +105,7 @@ pub fn parse_file_header(mmap: &[u8]) -> io::Result<FileHeader> {
     let kvp_metadata_opt = if kvp_metadata.is_empty() {
         None
     } else {
-       Some(kvp_metadata)
+        Some(kvp_metadata)
     };
 
     Ok(FileHeader {

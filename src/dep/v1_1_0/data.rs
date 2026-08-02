@@ -70,7 +70,7 @@ pub enum SignalArrayFormat {
     #[serde(rename = "CI4")]
     CI4,
     #[serde(rename = "CF8")]
-    CF8
+    CF8,
 }
 
 #[cfg(test)]
@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(data.signal_array_format, SignalArrayFormat::CI4);
         assert_eq!(data.num_bytes_pvp, 264);
         assert_eq!(data.num_cphd_channels, 1);
-        
+
         assert_eq!(data.channel.len(), 1);
         assert_eq!(data.channel[0].identifier, "0");
         assert_eq!(data.channel[0].num_vectors, 40290);
@@ -124,7 +124,7 @@ mod tests {
 
         assert_eq!(data.num_support_arrays, 2);
         assert_eq!(data.support_array.len(), 2);
-        
+
         assert_eq!(data.support_array[0].identifier, "SA_01");
         assert_eq!(data.support_array[0].num_rows, 100);
         assert_eq!(data.support_array[0].num_cols, 50);
@@ -136,6 +136,5 @@ mod tests {
         assert_eq!(data.support_array[1].num_cols, 50);
         assert_eq!(data.support_array[1].bytes_per_element, 4);
         assert_eq!(data.support_array[1].array_byte_offset, 20000);
-
     }
 }

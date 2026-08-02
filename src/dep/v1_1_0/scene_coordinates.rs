@@ -1,5 +1,5 @@
+use super::{EarthModel, Iarp, Vector3D};
 use serde::{Deserialize, Serialize};
-use super::{Iarp, Ecf,  EarthModel};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SceneCoordinates {
@@ -37,10 +37,10 @@ pub struct ReferenceSurface {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Planar {
     #[serde(rename = "uIAX")]
-    pub u_iax: Ecf,
+    pub u_iax: Vector3D,
 
     #[serde(rename = "uIAY")]
-    pub u_iay: Ecf,
+    pub u_iay: Vector3D,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -250,7 +250,6 @@ mod tests {
                 </ImageGrid>
             </SceneCoordinates>"#;
 
-
         let sc: SceneCoordinates = quick_xml::de::from_str(xml_str).unwrap();
 
         // Test EarthModel & IARP
@@ -271,7 +270,6 @@ mod tests {
         assert_eq!(sc.image_area_corner_points.iacp.len(), 4);
         assert_eq!(sc.image_area_corner_points.iacp[0].index, 1);
         assert_eq!(sc.image_area_corner_points.iacp[0].lat, 37.697610922734711);
-
 
         // Test ImageGrid
         let image_grid = sc.image_grid.as_ref().expect("ImageGrid should be present");
