@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use super::scene_coordinates::{ImageArea, Polygon, Vertex};
+use super::scene_coordinates::{ImageArea};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Channel {

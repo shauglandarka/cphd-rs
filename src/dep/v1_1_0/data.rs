@@ -108,12 +108,6 @@ mod tests {
                   </SupportArray>
               </Data>"#;
 
-        #[derive(Debug, Deserialize)]
-        struct CphdWrapper {
-            #[serde(rename = "Data")]
-            data: Data,
-        }
-
         let data: Data = quick_xml::de::from_str(xml_str).expect("Failed to parse Data block");
 
         assert_eq!(data.signal_array_format, SignalArrayFormat::CI4);

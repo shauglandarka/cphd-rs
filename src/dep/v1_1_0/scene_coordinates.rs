@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use super::{Iarp, Ecf, Llh, EarthModel};
+use super::{Iarp, Ecf,  EarthModel};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SceneCoordinates {

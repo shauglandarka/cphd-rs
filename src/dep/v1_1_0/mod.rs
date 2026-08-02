@@ -4,12 +4,14 @@ pub mod global;
 pub mod scene_coordinates;
 pub mod data;
 pub mod channel;
+pub mod pvp;
 
 use collection_id::CollectionId;
 use global::Global;
 use scene_coordinates::SceneCoordinates;
 use data::Data;
 use channel::Channel;
+use pvp::Pvp;
 
 use serde;
 use serde::{Deserialize, Serialize};
@@ -33,9 +35,9 @@ pub struct CphdMeta {
  
     #[serde(rename = "Channel")]
     pub channel: Channel,
-//
-//    #[serde(rename = "PVP")]
-//    pub pvp: Pvp,
+
+    #[serde(rename = "PVP")]
+    pub pvp: Pvp,
 //
 //    #[serde(rename = "Dwell")]
 //    pub dwell: Dwell,
