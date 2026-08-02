@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use super::{ModeType, CollectType};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CollectionId {
     #[serde(rename = "CollectorName")]
     pub collector_name: String,
@@ -31,7 +31,7 @@ pub struct CollectionId {
     pub parameter: Vec<Parameter>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RadarMode {
     #[serde(rename = "ModeType")]
     pub mode_type: ModeType,
@@ -40,7 +40,7 @@ pub struct RadarMode {
     pub mode_id: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Parameter {
     #[serde(rename = "@name")]
     pub name: String,
