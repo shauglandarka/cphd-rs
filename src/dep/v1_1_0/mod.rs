@@ -1,9 +1,11 @@
 pub mod file_hdr;
 pub mod collection_id;
 pub mod global;
+pub mod scene_coordinates;
 
 use collection_id::CollectionId;
 use global::Global;
+use scene_coordinates::SceneCoordinates;
 
 use serde;
 use serde::{Deserialize, Serialize};
@@ -31,6 +33,39 @@ pub struct CphdMeta {
 //    pub match_info: Option<MatchInfo>
 }
 
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Iarp {
+    #[serde(rename = "ECF")]
+    pub ecf: Ecf,
+
+    #[serde(rename = "LLH")]
+    pub llh: Llh,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Ecf {
+    #[serde(rename = "X")]
+    pub x: f64,
+
+    #[serde(rename = "Y")]
+    pub y: f64,
+
+    #[serde(rename = "Z")]
+    pub z: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Llh {
+    #[serde(rename = "Lat")]
+    pub lat: f64,
+
+    #[serde(rename = "Lon")]
+    pub lon: f64,
+
+    #[serde(rename = "HAE")]
+    pub hae: f64,
+}
 
 #[derive(Debug, Deserialize, PartialEq, Clone)]
 pub struct Poly {
