@@ -1,3 +1,4 @@
+use super::Polarization as PolarizationEnum;
 use super::scene_coordinates::ImageArea;
 use serde::{Deserialize, Serialize};
 
@@ -122,10 +123,10 @@ pub struct ChannelParameters {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Polarization {
     #[serde(rename = "TxPol")]
-    pub tx_pol: String,
+    pub tx_pol: PolarizationEnum,
 
     #[serde(rename = "RcvPol")]
-    pub rcv_pol: String,
+    pub rcv_pol: PolarizationEnum,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -305,8 +306,8 @@ mod tests {
         assert_eq!(params.identifier, "0");
         assert_eq!(params.ref_vector_index, 20145);
         assert!(params.fx_fixed);
-        assert_eq!(params.polarization.tx_pol, "H");
-        assert_eq!(params.polarization.rcv_pol, "H");
+        assert_eq!(params.polarization.tx_pol, PolarizationEnum::H);
+        assert_eq!(params.polarization.rcv_pol, PolarizationEnum::H);
         assert_eq!(params.fx_c, 9.64999987200000000E+09);
         assert_eq!(params.fx_bw, 200000000.0);
         assert_eq!(params.toa_saved, 2.84479166666666692E-05);

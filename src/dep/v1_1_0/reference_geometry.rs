@@ -191,7 +191,6 @@ mod tests {
         </ReferenceGeometry>"#;
 
         let ref_geom: ReferenceGeometry = quick_xml::de::from_str(xml_data).unwrap();
-        dbg!(&ref_geom);
 
         assert_eq!(ref_geom.reference_time, 1.99193707028013844E+00);
         assert_eq!(ref_geom.srp.ecf.x, -2709779.4616113761);

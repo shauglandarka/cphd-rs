@@ -1,3 +1,4 @@
+pub mod antenna;
 pub mod channel;
 pub mod collection_id;
 pub mod data;
@@ -7,14 +8,18 @@ pub mod global;
 pub mod pvp;
 pub mod reference_geometry;
 pub mod scene_coordinates;
+pub mod tx_rcv;
 
+use antenna::Antenna;
 use channel::Channel;
 use collection_id::CollectionId;
 use data::Data;
 use dwell::Dwell;
 use global::Global;
 use pvp::Pvp;
+use reference_geometry::ReferenceGeometry;
 use scene_coordinates::SceneCoordinates;
+use tx_rcv::TxRcv;
 
 use serde;
 use serde::{Deserialize, Serialize};
@@ -43,18 +48,20 @@ pub struct CphdMeta {
 
     #[serde(rename = "Dwell")]
     pub dwell: Dwell,
-    //
-    //    #[serde(rename = "ReferenceGeometry")]
-    //    pub reference_geometry: ReferenceGeometry,
+
+    #[serde(rename = "ReferenceGeometry")]
+    pub reference_geometry: ReferenceGeometry,
+
+    #[serde(rename = "Antenna", default)]
+    pub antenna: Option<Antenna>,
+
+    #[serde(rename = "TxRcv")]
+    pub tx_rcv: Option<TxRcv>,
     //
     //    #[serde(rename = "SupportArray")]
     //    pub support_array: Option<SupportArray>,
     //
-    //    #[serde(rename = "Antenna")]
-    //    pub antenna: Option<Antenna>,
     //
-    //    #[serde(rename = "TxRcv")]
-    //    pub tx_rcv: Option<TxRcv>,
     //
     //    #[serde(rename = "ErrorParameters")]
     //    pub error_parameters: Option<ErrorParameters>,
@@ -67,6 +74,28 @@ pub struct CphdMeta {
     //
     //    #[serde(rename = "MatchInfo")]
     //    pub match_info: Option<MatchInfo>
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+pub enum Polarization {
+    #[serde(rename = "V")]
+    V,
+    #[serde(rename = "H")]
+    H,
+    #[serde(rename = "X")]
+    X,
+    #[serde(rename = "Y")]
+    Y,
+    #[serde(rename = "S")]
+    S,
+    #[serde(rename = "E")]
+    E,
+    #[serde(rename = "RHC")]
+    Rhc,
+    #[serde(rename = "LHC")]
+    Lhc,
+    #[serde(rename = "UNSPECIFIED")]
+    Unspecified,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -103,6 +132,16 @@ pub struct Llh {
     pub lon: f64,
     #[serde(rename = "HAE")]
     pub hae: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct XyzPoly {
+    #[serde(rename = "X")]
+    pub x: Poly,
+    #[serde(rename = "Y")]
+    pub y: Poly,
+    #[serde(rename = "Z")]
+    pub z: Poly,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
@@ -181,28 +220,6 @@ pub enum SignalArrayFormat {
     Ci4,
     #[serde(rename = "CF8")]
     Cf8,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Polarization {
-    #[serde(rename = "V")]
-    V,
-    #[serde(rename = "H")]
-    H,
-    #[serde(rename = "X")]
-    X,
-    #[serde(rename = "Y")]
-    Y,
-    #[serde(rename = "S")]
-    S,
-    #[serde(rename = "E")]
-    E,
-    #[serde(rename = "RHC")]
-    Rhc,
-    #[serde(rename = "LHC")]
-    Lhc,
-    #[serde(rename = "UNSPECIFIED")]
-    Unspecified,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
