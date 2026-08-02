@@ -5,6 +5,7 @@ pub mod scene_coordinates;
 pub mod data;
 pub mod channel;
 pub mod pvp;
+pub mod dwell;
 
 use collection_id::CollectionId;
 use global::Global;
@@ -12,6 +13,7 @@ use scene_coordinates::SceneCoordinates;
 use data::Data;
 use channel::Channel;
 use pvp::Pvp;
+use dwell::Dwell;
 
 use serde;
 use serde::{Deserialize, Serialize};
@@ -38,9 +40,9 @@ pub struct CphdMeta {
 
     #[serde(rename = "PVP")]
     pub pvp: Pvp,
-//
-//    #[serde(rename = "Dwell")]
-//    pub dwell: Dwell,
+
+    #[serde(rename = "Dwell")]
+    pub dwell: Dwell,
 //
 //    #[serde(rename = "ReferenceGeometry")]
 //    pub reference_geometry: ReferenceGeometry,
@@ -115,6 +117,17 @@ pub struct Poly {
     #[serde(rename = "Coef")]
     pub coeffs: Vec<Coef>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Poly2D {
+    #[serde(rename = "@order1")]
+    pub order1: u32,
+    #[serde(rename = "@order2")]
+    pub order2: u32,
+    #[serde(rename = "Coef")]
+    pub coef: Vec<Coef>,
+}
+
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Coef {
