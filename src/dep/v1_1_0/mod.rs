@@ -57,11 +57,10 @@ pub struct CphdMeta {
 
     #[serde(rename = "TxRcv")]
     pub tx_rcv: Option<TxRcv>,
-    //
+
+    //    TO DO: These optional fields
     //    #[serde(rename = "SupportArray")]
     //    pub support_array: Option<SupportArray>,
-    //
-    //
     //
     //    #[serde(rename = "ErrorParameters")]
     //    pub error_parameters: Option<ErrorParameters>,
