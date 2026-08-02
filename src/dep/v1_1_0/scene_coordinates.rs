@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use super::{Iarp, Ecf, Llh, EarthModel};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SceneCoordinates {
     #[serde(rename = "EarthModel")]
     pub earth_model: EarthModel,
@@ -25,7 +25,7 @@ pub struct SceneCoordinates {
     pub image_grid: Option<ImageGrid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ReferenceSurface {
     #[serde(rename = "Planar", default)]
     pub planar: Option<Planar>,
@@ -34,7 +34,7 @@ pub struct ReferenceSurface {
     pub hae: Option<HaeSurface>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Planar {
     #[serde(rename = "uIAX")]
     pub u_iax: Ecf,
@@ -43,12 +43,12 @@ pub struct Planar {
     pub u_iay: Ecf,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct HaeSurface {
     // HAE branch parameters if populated
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ImageArea {
     #[serde(rename = "X1Y1")]
     pub x1_y1: PointXy,
@@ -60,7 +60,7 @@ pub struct ImageArea {
     pub polygon: Option<Polygon>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PointXy {
     #[serde(rename = "X")]
     pub x: i32,
@@ -69,7 +69,7 @@ pub struct PointXy {
     pub y: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Polygon {
     #[serde(rename = "@size")]
     pub size: usize,
@@ -78,7 +78,7 @@ pub struct Polygon {
     pub vertex: Vec<Vertex>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Vertex {
     #[serde(rename = "@index")]
     pub index: usize,
@@ -90,13 +90,13 @@ pub struct Vertex {
     pub y: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ImageAreaCornerPoints {
     #[serde(rename = "IACP")]
     pub iacp: Vec<Iacp>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ExtendedArea {
     #[serde(rename = "X1Y1")]
     pub x1_y1: PointXy,
@@ -108,7 +108,7 @@ pub struct ExtendedArea {
     pub polygon: Option<Polygon>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Iacp {
     #[serde(rename = "@index")]
     pub index: usize,
@@ -120,7 +120,7 @@ pub struct Iacp {
     pub lon: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ImageGrid {
     #[serde(rename = "Identifier", default)]
     pub identifier: Option<String>,
@@ -135,7 +135,7 @@ pub struct ImageGrid {
     pub iay_extent: IayExtent,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct IarpLocation {
     #[serde(rename = "Line")]
     pub line: f64,
@@ -144,7 +144,7 @@ pub struct IarpLocation {
     pub sample: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct IaxExtent {
     #[serde(rename = "LineSpacing")]
     pub line_spacing: f64,
@@ -156,7 +156,7 @@ pub struct IaxExtent {
     pub num_lines: i32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct IayExtent {
     #[serde(rename = "SampleSpacing")]
     pub sample_spacing: f64,
