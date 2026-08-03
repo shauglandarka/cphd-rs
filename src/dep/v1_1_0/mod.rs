@@ -1,9 +1,12 @@
+use serde;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+
 pub mod antenna;
 pub mod channel;
 pub mod collection_id;
 pub mod data;
 pub mod dwell;
-pub mod file_hdr;
 pub mod global;
 pub mod pvp;
 pub mod reference_geometry;
@@ -21,8 +24,33 @@ use reference_geometry::ReferenceGeometry;
 use scene_coordinates::SceneCoordinates;
 use tx_rcv::TxRcv;
 
-use serde;
-use serde::{Deserialize, Serialize};
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub struct CphdHeader {
+    // CPHD version (e.g., "1.0")
+    pub version: String,
+    // Size of the XML block in bytes
+    pub xml_block_size: u64,
+    // Offset to the XML block
+    pub xml_block_byte_offset: u64,
+    // Optional: Size of the Support block
+    pub support_block_size: Option<u64>,
+    // Optional: Offset to the Support block
+    pub support_block_byte_offset: Option<u64>,
+    // Size of the PVP block in bytes
+    pub pvp_block_size: u64,
+    // Offset to the PVP block
+    pub pvp_block_byte_offset: u64,
+    // Size of the Signal block in bytes
+    pub signal_block_size: u64,
+    // Offset to the Signal block
+    pub signal_block_byte_offset: u64,
+    // Product classification (default: "UNCLASSIFIED")
+    pub classification: String,
+    // Product release info (default: "UNRESTRICTED")
+    pub release_info: String,
+    // Additional optional KVPs
+    pub kvp_metadata: Option<HashMap<String, String>>,
+}
 
 /// Represents the high-level metadata and branch tracking for the CPHD XML block.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
