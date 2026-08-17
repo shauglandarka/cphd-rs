@@ -19,7 +19,7 @@ use collection_id::CollectionId;
 use data::Data;
 use dwell::Dwell;
 use global::Global;
-use pvp::Pvp;
+pub use pvp::{Pvp, PvpIterator};
 use reference_geometry::ReferenceGeometry;
 use scene_coordinates::SceneCoordinates;
 use tx_rcv::TxRcv;

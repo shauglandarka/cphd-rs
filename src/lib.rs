@@ -2,6 +2,7 @@ pub mod dep;
 use serde::{Deserialize};
 use thiserror::Error;
 use memmap2::Mmap;
+use std::sync::Arc;
 
 use crate::dep::v1_1_0;
 
@@ -12,6 +13,9 @@ use std::str::{Utf8Error, from_utf8};
 use std::fs::File;
 use std::path::Path;
 use std::fmt::Display;
+
+use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
+use std::io::Cursor;
 
 #[derive(Error, Debug)]
 pub enum CphdError {
@@ -36,17 +40,22 @@ pub fn read_cphd(path: &Path) -> Result<Cphd> {
     Cphd::from_file(file)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Cphd {
     pub header: CphdHeader,
     pub version: CphdVersion,
     pub meta: CphdMeta,
+    pub mmap: Arc<Mmap>,
+    pub support_block: Option<Vec<u8>>, // not implemented yet
+    pub pvp_iterator: PvpIterator,
 }
 
 impl Cphd {
     pub fn from_file(file: File) -> Result<Self> {
         let mmap = unsafe { Mmap::map(&file)? };
-        let header = parse_file_header(&mmap)?;
+        let mmap_arc = Arc::new(mmap);
+
+        let header = parse_file_header(&mmap_arc)?;
 
         let version_str = match &header {
             CphdHeader::V1_1_0(h) => &h.version,
@@ -60,7 +69,7 @@ impl Cphd {
         let offset = header.xml_block_byte_offset() as usize;
         let size = header.xml_block_size() as usize;
 
-        let xml_slice = mmap.get(offset..offset + size)
+        let xml_slice = mmap_arc.get(offset..offset + size)
             .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::UnexpectedEof))?;
         let xml_str = from_utf8(xml_slice)?;
 
@@ -71,10 +80,51 @@ impl Cphd {
             }
         };
   
+        // Optional support block
+        let support_block = match &header {
+            CphdHeader::V1_1_0(h) => {
+                if let Some(support_block_size) = h.support_block_size {
+                    let support_offset = h.support_block_byte_offset.unwrap() as usize;
+                    let support_size = support_block_size as usize;
+                    let support_slice = mmap_arc.get(support_offset..support_offset + support_size)
+                        .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::UnexpectedEof))?;
+                    Some(support_slice.to_vec())
+
+                } else {
+                    None
+                }
+            }
+        };
+
+        let pvp_iterator = match version {
+            CphdVersion::V1_1_0 => {
+                let v1_meta = match &meta {
+                    CphdMeta::V1_1_0(m) => m,
+                };
+        
+                PvpIterator::V1_1_0(v1_1_0::PvpIterator::new(
+                    mmap_arc.clone(),
+                    &v1_meta.pvp,
+                    header.pvp_block_byte_offset() as usize,
+                    header.pvp_block_size() as usize,
+                ))
+            }
+        };
+
+
+        let pvp_offset = header.pvp_block_byte_offset() as usize;
+        let pvp_size = header.pvp_block_size() as usize;
+
+//        let signal_offset = header.signal_block_size() as usize;
+//        let signal_size =  header.signal_block_byte_offset() as usize;
+
         Ok(Cphd {
                header,
                version,
-               meta
+               meta,
+               mmap: mmap_arc,
+               support_block,
+               pvp_iterator,
         })
     }
 }
@@ -83,11 +133,39 @@ impl Cphd {
 pub enum CphdVersion {
     #[serde(rename = "1.1.0")]
     V1_1_0,
+    //#[serde(rename = "1.2.0")]
+    //V1_2_0,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum CphdMeta {
     V1_1_0(v1_1_0::CphdMeta),
+    //V1_2_0(v1_1_0::CphdMeta),
+}
+
+#[derive(Debug)]
+pub enum PvpIterator {
+    V1_1_0(v1_1_0::pvp::PvpIterator),
+    //V1_2_0(v1_1_0::pvp::PvpIterator),
+}
+
+#[derive(Debug)]
+pub enum PvpSet {
+    V1_1_0(v1_1_0::pvp::PvpSet),
+    //V1_2_0(v1_1_0::PvpSet),
+}
+
+impl Iterator for PvpIterator {
+    type Item = PvpSet;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            PvpIterator::V1_1_0(iterator) => {
+                iterator.next().map(PvpSet::V1_1_0)
+            }
+           // PvpIterator::V1_2_0(iterator) => iterator.next(),
+        }
+    }
 }
 
 impl CphdMeta {
@@ -114,6 +192,34 @@ impl CphdHeader {
     pub fn xml_block_size(&self) -> u64 {
         match self {
             CphdHeader::V1_1_0(h) => h.xml_block_size,
+            // CphdHeader::V1_2_0(h) => h.xml_block_size, // Future versions
+        }
+    }
+
+    pub fn pvp_block_byte_offset(&self) -> u64 {
+        match self {
+            CphdHeader::V1_1_0(h) => h.pvp_block_byte_offset,
+            // CphdHeader::V1_2_0(h) => h.xml_block_byte_offset, // Future versions
+        }
+    }
+
+    pub fn pvp_block_size(&self) -> u64 {
+        match self {
+            CphdHeader::V1_1_0(h) => h.pvp_block_size,
+            // CphdHeader::V1_2_0(h) => h.xml_block_size, // Future versions
+        }
+    }
+
+    pub fn signal_block_byte_offset(&self) -> u64 {
+        match self {
+            CphdHeader::V1_1_0(h) => h.signal_block_byte_offset,
+            // CphdHeader::V1_2_0(h) => h.xml_block_byte_offset, // Future versions
+        }
+    }
+
+    pub fn signal_block_size(&self) -> u64 {
+        match self {
+            CphdHeader::V1_1_0(h) => h.signal_block_size,
             // CphdHeader::V1_2_0(h) => h.xml_block_size, // Future versions
         }
     }
@@ -147,6 +253,8 @@ pub fn parse_file_header(mmap: &[u8]) -> Result<CphdHeader> {
     let mut version = String::new();
     let mut xml_block_size = 0;
     let mut xml_block_byte_offset = 0;
+    let mut support_block_size: Option<u64> = None;
+    let mut support_block_byte_offset: Option<u64> = None;
     let mut pvp_block_size = 0;
     let mut pvp_block_byte_offset = 0;
     let mut signal_block_size = 0;
@@ -178,6 +286,10 @@ pub fn parse_file_header(mmap: &[u8]) -> Result<CphdHeader> {
                 "XML_BLOCK_BYTE_OFFSET" => {
                     xml_block_byte_offset = value.parse().unwrap_or_default()
                 }
+                "SUPPORT_BLOCK_SIZE" => support_block_size = Some(value.parse().unwrap_or_default()),
+                "SUPPORT_BLOCK_BYTE_OFFSET" => {
+                    support_block_byte_offset = Some(value.parse().unwrap_or_default())
+                }
                 "PVP_BLOCK_SIZE" => pvp_block_size = value.parse().unwrap_or_default(),
                 "PVP_BLOCK_BYTE_OFFSET" => {
                     pvp_block_byte_offset = value.parse().unwrap_or_default()
@@ -206,8 +318,8 @@ pub fn parse_file_header(mmap: &[u8]) -> Result<CphdHeader> {
             version, // moved here safely
             xml_block_size,
             xml_block_byte_offset,
-            support_block_size: None,
-            support_block_byte_offset: None,
+            support_block_size,
+            support_block_byte_offset,
             pvp_block_size,
             pvp_block_byte_offset,
             signal_block_size,
