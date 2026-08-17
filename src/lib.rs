@@ -5,6 +5,8 @@ use memmap2::Mmap;
 use std::sync::Arc;
 
 use crate::dep::v1_1_0;
+use crate::dep::v1_1_0::data::SignalArrayFormat;
+use crate::dep::v1_1_0::data::ChannelData;
 
 use quick_xml::DeError;
 use std::io::{Error, ErrorKind};
@@ -16,6 +18,9 @@ use std::fmt::Display;
 
 use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
 use std::io::Cursor;
+
+use num_complex::Complex;
+use ndarray::Array1;
 
 #[derive(Error, Debug)]
 pub enum CphdError {
@@ -46,8 +51,9 @@ pub struct Cphd {
     pub version: CphdVersion,
     pub meta: CphdMeta,
     pub mmap: Arc<Mmap>,
-    pub support_block: Option<Vec<u8>>, // not implemented yet
+    pub support_block: Option<Vec<u8>>, // not tested
     pub pvp_iterators: Vec<v1_1_0::pvp::PvpIterator>,
+    pub signal_iterators: Vec<SignalIterator>,
 }
 
 impl Cphd {
@@ -95,8 +101,8 @@ impl Cphd {
                 }
             }
         };
+
         let global_pvp_offset = header.pvp_block_byte_offset() as usize;
-        let pvp_size = header.pvp_block_size() as usize;
 
         let pvp_iterators = match version {
             CphdVersion::V1_1_0 => {
@@ -120,10 +126,34 @@ impl Cphd {
             }
         };
 
+        let global_signal_offset = header.signal_block_byte_offset() as usize;
+
+        let signal_iterators = match version {
+            CphdVersion::V1_1_0 => {
+                let v1_meta = match &meta {
+                    CphdMeta::V1_1_0(m) => m,
+                    _ => panic!("Metadata version mismatch"),
+                };
+        
+                v1_meta.data.channel
+                    .iter()
+                    .map(|ch| {
+                        SignalIterator::new(
+                            mmap_arc.clone(),
+                            v1_meta.data.signal_array_format, 
+                            global_signal_offset + (ch.signal_array_byte_offset as usize),
+                            ch.signal_array_byte_offset as usize,
+                            ch.num_vectors as usize,
+                            ch.num_samples as usize,
+                        )
+                    })
+                    .collect()
+            }
+        };
 
 
-//        let signal_offset = header.signal_block_size() as usize;
-//        let signal_size =  header.signal_block_byte_offset() as usize;
+
+
 
         Ok(Cphd {
                header,
@@ -132,9 +162,11 @@ impl Cphd {
                mmap: mmap_arc,
                support_block,
                pvp_iterators,
+               signal_iterators,
         })
     }
 }
+
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum CphdVersion {
@@ -316,8 +348,94 @@ pub fn parse_file_header(mmap: &[u8]) -> Result<CphdHeader> {
     } else {
         Err(CphdError::VersionError(version))
     }
-
 }
+
+#[derive(Debug)]
+pub struct SignalIterator {
+    mmap: Arc<Mmap>,
+    signal_block_offset: usize,
+    channel_offset: usize,
+    num_vectors: usize,
+    num_samples: usize,
+    current_vector: usize,
+    signal_format: SignalArrayFormat,
+}
+
+impl SignalIterator {
+    pub fn new(
+        mmap: Arc<Mmap>,
+        signal_format: SignalArrayFormat,
+        signal_block_offset: usize,
+        channel_offset: usize,
+        num_vectors: usize,
+        num_samples: usize,
+    ) -> Self {
+
+        Self {
+            mmap,
+            signal_block_offset,
+            channel_offset,
+            num_vectors,
+            num_samples,
+            current_vector: 0,
+            signal_format,
+        }
+    }
+}
+    
+impl Iterator for SignalIterator {
+    type Item = ndarray::Array1<num_complex::Complex<f32>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_vector >= self.num_vectors {
+            return None;
+        }
+
+        let bytes_per_sample = match self.signal_format {
+            SignalArrayFormat::CI2 => 2,
+            SignalArrayFormat::CI4 => 4,
+            SignalArrayFormat::CF8 => 8,
+        };
+
+        let bytes_per_vector = self.num_samples * bytes_per_sample;
+        
+        // Use the absolute start offset + stride for the current vector
+        let absolute_offset = self.signal_block_offset 
+                             + self.channel_offset  
+                             + (self.current_vector * bytes_per_vector);
+
+        let vector_slice = self.mmap.get(absolute_offset..absolute_offset + bytes_per_vector)?;
+
+        let mut samples = Vec::with_capacity(self.num_samples);
+
+        match self.signal_format {
+            SignalArrayFormat::CI2 => {
+                for chunk in vector_slice.chunks_exact(2) {
+                    let real = chunk[0] as i8 as f32;
+                    let imag = chunk[1] as i8 as f32;
+                    samples.push(num_complex::Complex::new(real, imag));
+                }
+            }
+            SignalArrayFormat::CI4 => {
+                for chunk in vector_slice.chunks_exact(4) {
+                    let real = i16::from_be_bytes([chunk[0], chunk[1]]) as f32;
+                    let imag = i16::from_be_bytes([chunk[2], chunk[3]]) as f32;
+                    samples.push(num_complex::Complex::new(real, imag));
+                }
+            }
+            SignalArrayFormat::CF8 => {
+                for chunk in vector_slice.chunks_exact(8) {
+                    let real = f32::from_be_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+                    let imag = f32::from_be_bytes([chunk[4], chunk[5], chunk[6], chunk[7]]);
+                    samples.push(num_complex::Complex::new(real, imag));
+                }
+            }
+        }
+        self.current_vector += 1;
+        Some(ndarray::Array1::from(samples))
+    }
+}
+
 
 //#[cfg(test)]
 //mod tests {

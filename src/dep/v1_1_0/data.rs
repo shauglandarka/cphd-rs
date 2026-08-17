@@ -63,7 +63,7 @@ pub struct SupportArray {
     pub array_byte_offset: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum SignalArrayFormat {
     #[serde(rename = "CI2")]
     CI2,

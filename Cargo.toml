@@ -12,6 +12,8 @@ categories = ["science", "algorithms"]
 [dependencies]
 byteorder = "1.5.0"
 memmap2 = "0.9.11"
+ndarray = "0.17.2"
+num-complex = "0.4.6"
 quick-xml = { version = "0.41.0", features = ["serialize"] }
 serde = { version = "1.0.229", features = ["derive"] }
 thiserror = "2.0.20"
