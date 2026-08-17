@@ -184,10 +184,12 @@ impl PvpIterator {
     pub fn new(mmap: Arc<Mmap>, 
                pvp: &Pvp, 
                pvp_block_offset: usize,
-               pvp_block_size: usize) -> Self {
+               total_vectors: usize,
+               num_bytes_pvp: usize) -> Self {
 
         let pvp_set_size = calculate_pvp_set_size(pvp);
-        let total_vectors = pvp_block_size / pvp_set_size;
+
+        assert_eq!(pvp_set_size, num_bytes_pvp);
 
         Self {
             mmap,
@@ -199,6 +201,7 @@ impl PvpIterator {
         }
     }
 }
+
 
 impl Iterator for PvpIterator {
     type Item = PvpSet;

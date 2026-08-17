@@ -47,7 +47,7 @@ pub struct Cphd {
     pub meta: CphdMeta,
     pub mmap: Arc<Mmap>,
     pub support_block: Option<Vec<u8>>, // not implemented yet
-    pub pvp_iterator: PvpIterator,
+    pub pvp_iterators: Vec<v1_1_0::pvp::PvpIterator>,
 }
 
 impl Cphd {
@@ -95,25 +95,32 @@ impl Cphd {
                 }
             }
         };
+        let global_pvp_offset = header.pvp_block_byte_offset() as usize;
+        let pvp_size = header.pvp_block_size() as usize;
 
-        let pvp_iterator = match version {
+        let pvp_iterators = match version {
             CphdVersion::V1_1_0 => {
                 let v1_meta = match &meta {
                     CphdMeta::V1_1_0(m) => m,
+                    _ => panic!("Metadata version mismatch"),
                 };
-        
-                PvpIterator::V1_1_0(v1_1_0::PvpIterator::new(
-                    mmap_arc.clone(),
-                    &v1_meta.pvp,
-                    header.pvp_block_byte_offset() as usize,
-                    header.pvp_block_size() as usize,
-                ))
+
+                v1_meta.data.channel
+                    .iter()
+                    .map(|ch| {
+                       v1_1_0::pvp::PvpIterator::new(
+                           mmap_arc.clone(),
+                           &v1_meta.pvp,
+                           global_pvp_offset + (ch.pvp_array_byte_offset as usize),
+                           ch.num_vectors as usize,
+                           v1_meta.data.num_bytes_pvp as usize,
+                       )
+                })
+                .collect()
             }
         };
 
 
-        let pvp_offset = header.pvp_block_byte_offset() as usize;
-        let pvp_size = header.pvp_block_size() as usize;
 
 //        let signal_offset = header.signal_block_size() as usize;
 //        let signal_size =  header.signal_block_byte_offset() as usize;
@@ -124,7 +131,7 @@ impl Cphd {
                meta,
                mmap: mmap_arc,
                support_block,
-               pvp_iterator,
+               pvp_iterators,
         })
     }
 }
@@ -141,31 +148,6 @@ pub enum CphdVersion {
 pub enum CphdMeta {
     V1_1_0(v1_1_0::CphdMeta),
     //V1_2_0(v1_1_0::CphdMeta),
-}
-
-#[derive(Debug)]
-pub enum PvpIterator {
-    V1_1_0(v1_1_0::pvp::PvpIterator),
-    //V1_2_0(v1_1_0::pvp::PvpIterator),
-}
-
-#[derive(Debug)]
-pub enum PvpSet {
-    V1_1_0(v1_1_0::pvp::PvpSet),
-    //V1_2_0(v1_1_0::PvpSet),
-}
-
-impl Iterator for PvpIterator {
-    type Item = PvpSet;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self {
-            PvpIterator::V1_1_0(iterator) => {
-                iterator.next().map(PvpSet::V1_1_0)
-            }
-           // PvpIterator::V1_2_0(iterator) => iterator.next(),
-        }
-    }
 }
 
 impl CphdMeta {
