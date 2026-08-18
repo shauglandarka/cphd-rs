@@ -6,7 +6,6 @@ use std::sync::Arc;
 
 use crate::dep::v1_1_0;
 use crate::dep::v1_1_0::data::SignalArrayFormat;
-use crate::dep::v1_1_0::data::ChannelData;
 
 use quick_xml::DeError;
 use std::io::{Error, ErrorKind};
@@ -15,9 +14,6 @@ use std::str::{Utf8Error, from_utf8};
 use std::fs::File;
 use std::path::Path;
 use std::fmt::Display;
-
-use byteorder::{LittleEndian, BigEndian, ReadBytesExt};
-use std::io::Cursor;
 
 use num_complex::Complex;
 use ndarray::Array1;
@@ -108,7 +104,6 @@ impl Cphd {
             CphdVersion::V1_1_0 => {
                 let v1_meta = match &meta {
                     CphdMeta::V1_1_0(m) => m,
-                    _ => panic!("Metadata version mismatch"),
                 };
 
                 v1_meta.data.channel
@@ -132,7 +127,6 @@ impl Cphd {
             CphdVersion::V1_1_0 => {
                 let v1_meta = match &meta {
                     CphdMeta::V1_1_0(m) => m,
-                    _ => panic!("Metadata version mismatch"),
                 };
         
                 v1_meta.data.channel
@@ -384,7 +378,7 @@ impl SignalIterator {
 }
     
 impl Iterator for SignalIterator {
-    type Item = ndarray::Array1<num_complex::Complex<f32>>;
+    type Item = Array1<Complex<f32>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_vector >= self.num_vectors {

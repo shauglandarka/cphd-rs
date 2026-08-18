@@ -2,9 +2,6 @@
 
 A rust crate for reading and writing NITF CPHD format
 
-Requirements and guidance for the design & implementation
-of CPHD products for SAR imaging systems.
-
 CPHD product is an intermediate data product. The real utility is in the products and
 measurements that may be derived from it. The quality of the phase history signal arrays
 (bandwidth, dwell time, etc.), along with the set of metadata provided, are critical in
@@ -16,6 +13,12 @@ parameters.
 
 This crate doesn't support all of the optional CPHD xml fields yet.
 
+This crate has only been tested on Capella single-channel CPHD 1.1.0
+
 Inspired by SIX/Sarpy/Sarkit/MATLAB SAR toolbox, etc. 
+
+
+See examples/read\_cphd.rs for how to use
+    
 
 

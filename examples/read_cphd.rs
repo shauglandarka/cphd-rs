@@ -1,4 +1,4 @@
-use cphd_rs::{Cphd, CphdError, read_cphd};
+use cphd_rs::{CphdError, read_cphd};
 
 fn main() -> Result<(), CphdError> {
     // Pass a path string, &Path, or PathBuf
@@ -22,7 +22,7 @@ fn main() -> Result<(), CphdError> {
     // The PVP block is treated as a vector of iterators. Each vector element
     // corresponds to a channel.
     println!("First PVP set for each channel:");
-    for (ch_idx, pvp_iter) in cphd.pvp_iterators.iter_mut().enumerate() {
+    for (_, pvp_iter) in cphd.pvp_iterators.iter_mut().enumerate() {
         for (i, pvp_set) in pvp_iter.enumerate().take(3) {
            println!("  Set {}: tx_time = {}", i + 1, pvp_set.tx_time); // adjust field name if nested
         }
@@ -31,10 +31,10 @@ fn main() -> Result<(), CphdError> {
     // The signal block is handled similarly, and the iterators return
     // complex-valued ndarray::Array1.
     println!("First data set for each channel:");
-    for (ch_idx, signal_iter) in cphd.signal_iterators.iter_mut().enumerate() {
-        for (i, signal) in signal_iter.enumerate().take(1) {    
+    for (_, signal_iter) in cphd.signal_iterators.iter_mut().enumerate() {
+        for (_, signal) in signal_iter.enumerate().take(1) {    
             println!("Len samples: {}", signal.len()); 
-            for j in (0..10) {
+            for j in 0..10 {
                 println!("{}", signal[j].arg().to_degrees()); 
             }
         }
