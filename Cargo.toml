@@ -1,5 +1,5 @@
 [package]
-name = "cphd_rs"
+name = "cphd-rs"
 version = "0.0.1"
 edition = "2024"
 description = "NITF CPHD I/O tools" 
