@@ -7,7 +7,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://https://github.com/shauglandarka/cphd-rs"
 readme = "README.md"  
 keywords = ["Radar", "SAR", "NITF", "CPHD"] 
-categories = ["science", "algorithms"]    
+categories = ["science::geo", "algorithms", "aerospace", "parser-implementations"]    
 
 [dependencies]
 byteorder = "1.5.0"

@@ -1,10 +1,9 @@
-use serde::{Deserialize, Serialize};
-use byteorder::{BigEndian, ReadBytesExt};
-use std::io::Cursor;
 use crate::Result;
+use byteorder::{BigEndian, ReadBytesExt};
 use memmap2::Mmap;
+use serde::{Deserialize, Serialize};
+use std::io::Cursor;
 use std::sync::Arc;
-
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PvpField {
@@ -87,7 +86,7 @@ pub struct Pvp {
     pub sc0: PvpField,
     #[serde(rename = "SCSS")]
     pub scss: PvpField,
-    
+
     #[serde(rename = "TxACX", skip_serializing_if = "Option::is_none", default)]
     pub tx_acx: Option<PvpField>,
 
@@ -110,10 +109,11 @@ pub struct Pvp {
     pub signal: Option<PvpField>,
 
     // Support multiple or optional user-defined added PVPs
-    #[serde(rename = "AddedPVP", skip_serializing_if = "Option::is_none", default)] pub added_pvp: Option<Vec<AddedPvpField>>,
+    #[serde(rename = "AddedPVP", skip_serializing_if = "Option::is_none", default)]
+    pub added_pvp: Option<Vec<AddedPvpField>>,
 }
 
-// Table 2-2 Defined Per Vector Parameters. 
+// Table 2-2 Defined Per Vector Parameters.
 // NGA.STND.0068-1_1.1.0_CPHD p. 25
 #[derive(Debug, Clone)]
 pub struct PvpSet {
@@ -181,12 +181,13 @@ pub struct PvpIterator {
 }
 
 impl PvpIterator {
-    pub fn new(mmap: Arc<Mmap>, 
-               pvp: &Pvp, 
-               pvp_block_offset: usize,
-               total_vectors: usize,
-               num_bytes_pvp: usize) -> Self {
-
+    pub fn new(
+        mmap: Arc<Mmap>,
+        pvp: &Pvp,
+        pvp_block_offset: usize,
+        total_vectors: usize,
+        num_bytes_pvp: usize,
+    ) -> Self {
         //let pvp_set_size = calculate_pvp_set_size(pvp);
 
         //assert_eq!(pvp_set_size, num_bytes_pvp);
@@ -202,7 +203,6 @@ impl PvpIterator {
     }
 }
 
-
 impl Iterator for PvpIterator {
     type Item = PvpSet;
 
@@ -217,7 +217,8 @@ impl Iterator for PvpIterator {
             self.current_vector,
             self.pvp_set_size,
             self.pvp_block_offset,
-        ).expect("Failed to parse PVP set");
+        )
+        .expect("Failed to parse PVP set");
 
         self.current_vector += 1;
         Some(pvp_set)
@@ -261,7 +262,7 @@ pub fn calculate_pvp_set_size(pvp: &Pvp) -> usize {
         size += pvp.toae1.as_ref().unwrap().size;
     }
     if pvp.toae2.is_some() {
-            size += pvp.toae2.as_ref().unwrap().size;
+        size += pvp.toae2.as_ref().unwrap().size;
     }
     if pvp.td_iono_srp.is_some() {
         size += pvp.td_iono_srp.as_ref().unwrap().size;
@@ -288,7 +289,8 @@ pub fn parse_single_pvp_set(
     pvp_block_offset: usize,
 ) -> Result<PvpSet> {
     let pvp_set_offset = pvp_block_offset + vector_index * pvp_set_size;
-    let pvp_set_slice = mmap.get(pvp_set_offset..pvp_set_offset + pvp_set_size)
+    let pvp_set_slice = mmap
+        .get(pvp_set_offset..pvp_set_offset + pvp_set_size)
         .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::UnexpectedEof))?;
 
     let mut cursor = Cursor::new(pvp_set_slice);
@@ -397,7 +399,7 @@ pub fn parse_single_pvp_set(
     } else {
         None
     };
-    
+
     let tx_acy = if pvp.tx_acy.is_some() {
         Some([
             cursor.read_f64::<BigEndian>()?, // Xmt_ACY_X
@@ -407,7 +409,7 @@ pub fn parse_single_pvp_set(
     } else {
         None
     };
-    
+
     let tx_eb = if pvp.tx_eb.is_some() {
         Some([
             cursor.read_f64::<BigEndian>()?, // Xmt_EB_DCX
@@ -416,7 +418,7 @@ pub fn parse_single_pvp_set(
     } else {
         None
     };
-    
+
     // Parse optional receive antenna parameters
     let rcv_acx = if pvp.rcv_acx.is_some() {
         Some([
@@ -427,7 +429,7 @@ pub fn parse_single_pvp_set(
     } else {
         None
     };
-    
+
     let rcv_acy = if pvp.rcv_acy.is_some() {
         Some([
             cursor.read_f64::<BigEndian>()?, // Rcv_ACY_X
@@ -437,7 +439,7 @@ pub fn parse_single_pvp_set(
     } else {
         None
     };
-    
+
     let rcv_eb = if pvp.rcv_eb.is_some() {
         Some([
             cursor.read_f64::<BigEndian>()?, // Rcv_EB_DCX

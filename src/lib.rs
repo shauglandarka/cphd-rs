@@ -1,22 +1,22 @@
 pub mod dep;
-use serde::{Deserialize};
-use thiserror::Error;
 use memmap2::Mmap;
+use serde::Deserialize;
 use std::sync::Arc;
+use thiserror::Error;
 
 use crate::dep::v1_1_0;
 use crate::dep::v1_1_0::data::SignalArrayFormat;
 
 use quick_xml::DeError;
-use std::io::{Error, ErrorKind};
 use std::collections::HashMap;
-use std::str::{Utf8Error, from_utf8};
-use std::fs::File;
-use std::path::Path;
 use std::fmt::Display;
+use std::fs::File;
+use std::io::{Error, ErrorKind};
+use std::path::Path;
+use std::str::{Utf8Error, from_utf8};
 
-use num_complex::Complex;
 use ndarray::Array1;
+use num_complex::Complex;
 
 #[derive(Error, Debug)]
 pub enum CphdError {
@@ -67,11 +67,12 @@ impl Cphd {
             "CPHD/1.1.0" | "1.1.0" => CphdVersion::V1_1_0,
             other => return Err(CphdError::VersionError(other.to_string())),
         };
-        
+
         let offset = header.xml_block_byte_offset() as usize;
         let size = header.xml_block_size() as usize;
 
-        let xml_slice = mmap_arc.get(offset..offset + size)
+        let xml_slice = mmap_arc
+            .get(offset..offset + size)
             .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::UnexpectedEof))?;
         let xml_str = from_utf8(xml_slice)?;
 
@@ -81,17 +82,17 @@ impl Cphd {
                 CphdMeta::V1_1_0(parsed_meta)
             }
         };
-  
+
         // Optional support block
         let support_block = match &header {
             CphdHeader::V1_1_0(h) => {
                 if let Some(support_block_size) = h.support_block_size {
                     let support_offset = h.support_block_byte_offset.unwrap() as usize;
                     let support_size = support_block_size as usize;
-                    let support_slice = mmap_arc.get(support_offset..support_offset + support_size)
+                    let support_slice = mmap_arc
+                        .get(support_offset..support_offset + support_size)
                         .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::UnexpectedEof))?;
                     Some(support_slice.to_vec())
-
                 } else {
                     None
                 }
@@ -106,18 +107,20 @@ impl Cphd {
                     CphdMeta::V1_1_0(m) => m,
                 };
 
-                v1_meta.data.channel
+                v1_meta
+                    .data
+                    .channel
                     .iter()
                     .map(|ch| {
-                       v1_1_0::pvp::PvpIterator::new(
-                           mmap_arc.clone(),
-                           &v1_meta.pvp,
-                           global_pvp_offset + (ch.pvp_array_byte_offset as usize),
-                           ch.num_vectors as usize,
-                           v1_meta.data.num_bytes_pvp as usize,
-                       )
-                })
-                .collect()
+                        v1_1_0::pvp::PvpIterator::new(
+                            mmap_arc.clone(),
+                            &v1_meta.pvp,
+                            global_pvp_offset + (ch.pvp_array_byte_offset as usize),
+                            ch.num_vectors as usize,
+                            v1_meta.data.num_bytes_pvp as usize,
+                        )
+                    })
+                    .collect()
             }
         };
 
@@ -128,13 +131,15 @@ impl Cphd {
                 let v1_meta = match &meta {
                     CphdMeta::V1_1_0(m) => m,
                 };
-        
-                v1_meta.data.channel
+
+                v1_meta
+                    .data
+                    .channel
                     .iter()
                     .map(|ch| {
                         SignalIterator::new(
                             mmap_arc.clone(),
-                            v1_meta.data.signal_array_format, 
+                            v1_meta.data.signal_array_format,
                             global_signal_offset + (ch.signal_array_byte_offset as usize),
                             ch.signal_array_byte_offset as usize,
                             ch.num_vectors as usize,
@@ -145,22 +150,17 @@ impl Cphd {
             }
         };
 
-
-
-
-
         Ok(Cphd {
-               header,
-               version,
-               meta,
-               mmap: mmap_arc,
-               support_block,
-               pvp_iterators,
-               signal_iterators,
+            header,
+            version,
+            meta,
+            mmap: mmap_arc,
+            support_block,
+            pvp_iterators,
+            signal_iterators,
         })
     }
 }
-
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub enum CphdVersion {
@@ -183,7 +183,7 @@ impl CphdMeta {
         }
     }
 }
- 
+
 #[derive(Debug, PartialEq, Deserialize)]
 pub enum CphdHeader {
     V1_1_0(v1_1_0::CphdHeader),
@@ -231,7 +231,6 @@ impl CphdHeader {
             // CphdHeader::V1_2_0(h) => h.xml_block_size, // Future versions
         }
     }
-
 }
 
 impl Display for CphdHeader {
@@ -294,7 +293,9 @@ pub fn parse_file_header(mmap: &[u8]) -> Result<CphdHeader> {
                 "XML_BLOCK_BYTE_OFFSET" => {
                     xml_block_byte_offset = value.parse().unwrap_or_default()
                 }
-                "SUPPORT_BLOCK_SIZE" => support_block_size = Some(value.parse().unwrap_or_default()),
+                "SUPPORT_BLOCK_SIZE" => {
+                    support_block_size = Some(value.parse().unwrap_or_default())
+                }
                 "SUPPORT_BLOCK_BYTE_OFFSET" => {
                     support_block_byte_offset = Some(value.parse().unwrap_or_default())
                 }
@@ -337,7 +338,8 @@ pub fn parse_file_header(mmap: &[u8]) -> Result<CphdHeader> {
             kvp_metadata: kvp_metadata_opt,
         };
         Ok(CphdHeader::V1_1_0(inner_header))
-    } else if version.contains("2.0.0") { // Future version placeholder
+    } else if version.contains("2.0.0") {
+        // Future version placeholder
         Err(CphdError::Unimpl(version))
     } else {
         Err(CphdError::VersionError(version))
@@ -364,7 +366,6 @@ impl SignalIterator {
         num_vectors: usize,
         num_samples: usize,
     ) -> Self {
-
         Self {
             mmap,
             signal_block_offset,
@@ -376,7 +377,7 @@ impl SignalIterator {
         }
     }
 }
-    
+
 impl Iterator for SignalIterator {
     type Item = Array1<Complex<f32>>;
 
@@ -392,13 +393,15 @@ impl Iterator for SignalIterator {
         };
 
         let bytes_per_vector = self.num_samples * bytes_per_sample;
-        
-        // Use the absolute start offset + stride for the current vector
-        let absolute_offset = self.signal_block_offset 
-                             + self.channel_offset  
-                             + (self.current_vector * bytes_per_vector);
 
-        let vector_slice = self.mmap.get(absolute_offset..absolute_offset + bytes_per_vector)?;
+        // Use the absolute start offset + stride for the current vector
+        let absolute_offset = self.signal_block_offset
+            + self.channel_offset
+            + (self.current_vector * bytes_per_vector);
+
+        let vector_slice = self
+            .mmap
+            .get(absolute_offset..absolute_offset + bytes_per_vector)?;
 
         let mut samples = Vec::with_capacity(self.num_samples);
 
@@ -429,7 +432,6 @@ impl Iterator for SignalIterator {
         Some(ndarray::Array1::from(samples))
     }
 }
-
 
 //#[cfg(test)]
 //mod tests {
