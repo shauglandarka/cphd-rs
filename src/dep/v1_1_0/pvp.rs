@@ -187,7 +187,7 @@ impl PvpIterator {
                total_vectors: usize,
                num_bytes_pvp: usize) -> Self {
 
-        let pvp_set_size = calculate_pvp_set_size(pvp);
+        //let pvp_set_size = calculate_pvp_set_size(pvp);
 
         //assert_eq!(pvp_set_size, num_bytes_pvp);
 
