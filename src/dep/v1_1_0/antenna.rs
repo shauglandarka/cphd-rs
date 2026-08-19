@@ -5,19 +5,14 @@ use serde::{Deserialize, Serialize};
 pub struct Antenna {
     #[serde(rename = "NumACFs")]
     pub num_acfs: i32,
-
     #[serde(rename = "NumAPCs")]
     pub num_apcs: i32,
-
     #[serde(rename = "NumAntPats")]
     pub num_ant_pats: i32,
-
     #[serde(rename = "AntCoordFrame")]
     pub ant_coord_frame: Vec<AntCoordFrame>,
-
     #[serde(rename = "AntPhaseCenter")]
     pub ant_phase_center: Vec<AntPhaseCenter>,
-
     #[serde(rename = "AntPattern")]
     pub ant_pattern: Vec<AntPattern>,
 }
@@ -26,12 +21,12 @@ pub struct Antenna {
 pub struct AntCoordFrame {
     #[serde(rename = "Identifier")]
     pub identifier: String,
-
     #[serde(rename = "XAxisPoly")]
     pub x_axis_poly: XyzPoly,
-
     #[serde(rename = "YAxisPoly")]
     pub y_axis_poly: XyzPoly,
+    #[serde(rename = "UseACFPVP", default)]
+    pub use_a_cf_pvp: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -50,12 +45,12 @@ pub struct AntPattern {
     pub identifier: String,
     #[serde(rename = "FreqZero")]
     pub freq_zero: f64,
-    #[serde(rename = "GainZero")]
-    pub gain_zero: f64,
-    #[serde(rename = "EBFreqShift")]
-    pub eb_freq_shift: bool,
-    #[serde(rename = "MLFreqDilation")]
-    pub ml_freq_dilation: bool,
+    #[serde(rename = "GainZero", default)]
+    pub gain_zero: Option<f64>,
+    #[serde(rename = "EBFreqShift", default)]
+    pub eb_freq_shift: Option<bool>,
+    #[serde(rename = "MLFreqDilation", default)]
+    pub ml_freq_dilation: Option<bool>,
     #[serde(rename = "EB")]
     pub eb: Eb,
     #[serde(rename = "Array")]

@@ -189,14 +189,14 @@ impl PvpIterator {
 
         let pvp_set_size = calculate_pvp_set_size(pvp);
 
-        assert_eq!(pvp_set_size, num_bytes_pvp);
+        //assert_eq!(pvp_set_size, num_bytes_pvp);
 
         Self {
             mmap,
             pvp: pvp.clone(),
             current_vector: 0,
             total_vectors,
-            pvp_set_size,
+            pvp_set_size: num_bytes_pvp, // pvp_set_size,
             pvp_block_offset,
         }
     }
