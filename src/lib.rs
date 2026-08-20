@@ -47,7 +47,7 @@ pub struct Cphd {
     pub version: CphdVersion,
     pub meta: CphdMeta,
     pub mmap: Arc<Mmap>,
-    pub support_block: Option<Vec<u8>>, // not tested
+    pub support_block: Option<Vec<SupportArrayHandle>>, // not tested
     pub pvp_iterators: Vec<v1_1_0::pvp::PvpIterator>,
     pub signal_iterators: Vec<SignalIterator>,
 }
@@ -83,16 +83,39 @@ impl Cphd {
             }
         };
 
-        // Optional support block
-        let support_block = match &header {
-            CphdHeader::V1_1_0(h) => {
-                if let Some(support_block_size) = h.support_block_size {
-                    let support_offset = h.support_block_byte_offset.unwrap() as usize;
-                    let support_size = support_block_size as usize;
-                    let support_slice = mmap_arc
-                        .get(support_offset..support_offset + support_size)
-                        .ok_or_else(|| std::io::Error::from(std::io::ErrorKind::UnexpectedEof))?;
-                    Some(support_slice.to_vec())
+        let support_block = match version {
+            CphdVersion::V1_1_0 => {
+                let v1_meta = match &meta {
+                    CphdMeta::V1_1_0(m) => m,
+                };
+        
+                // Check if the global support block offset exists in the header
+                let global_support_offset = header.support_block_byte_offset();
+        
+                if let Some(offset) = global_support_offset {
+                    let offset_usize = offset as usize;
+                    
+                    if !v1_meta.data.support_array.is_empty() {
+                        // Collects into a Vec<SupportArrayHandle>. 
+                        // Since SupportArrayHandle implements Iterator, this is a Vec of iterators!
+                        let handles: Vec<SupportArrayHandle> = v1_meta.data
+                            .support_array
+                            .iter()
+                            .map(|arr| {
+                                SupportArrayHandle::new(
+                                    mmap_arc.clone(),
+                                    offset_usize + (arr.array_byte_offset as usize),
+                                    arr.num_rows as usize,
+                                    arr.num_cols as usize,
+                                    arr.bytes_per_element as usize,
+                                    arr.identifier.clone(),
+                                )
+                            })
+                            .collect();
+                        Some(handles)
+                    } else {
+                        None
+                    }
                 } else {
                     None
                 }
@@ -200,6 +223,20 @@ impl CphdHeader {
     pub fn xml_block_size(&self) -> u64 {
         match self {
             CphdHeader::V1_1_0(h) => h.xml_block_size,
+            // CphdHeader::V1_2_0(h) => h.xml_block_size, // Future versions
+        }
+    }
+
+    pub fn support_block_byte_offset(&self) -> Option<u64> {
+        match self {
+            CphdHeader::V1_1_0(h) => h.support_block_byte_offset,
+            // CphdHeader::V1_2_0(h) => h.xml_block_byte_offset, // Future versions
+        }
+    }
+
+    pub fn support_block_size(&self) -> Option<u64> {
+        match self {
+            CphdHeader::V1_1_0(h) => h.support_block_size,
             // CphdHeader::V1_2_0(h) => h.xml_block_size, // Future versions
         }
     }
@@ -430,6 +467,115 @@ impl Iterator for SignalIterator {
         }
         self.current_vector += 1;
         Some(ndarray::Array1::from(samples))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct SupportArrayHandle {
+    pub mmap: Arc<Mmap>,
+    pub byte_offset: usize,
+    pub num_rows: usize,
+    pub num_cols: usize,
+    pub bytes_per_element: usize,
+    pub identifier: String,
+    current_row: usize
+}
+
+impl SupportArrayHandle {
+    pub fn new(
+        mmap: Arc<Mmap>,
+        byte_offset: usize,
+        num_rows: usize,
+        num_cols: usize,
+        bytes_per_element: usize,
+        identifier: String,
+    ) -> Self {
+        Self {
+            mmap,
+            byte_offset,
+            num_rows,
+            num_cols,
+            bytes_per_element,
+            identifier,
+            current_row: 0,
+        }
+    }
+
+    /// Returns the total expected size of this support array in bytes
+    pub fn total_bytes(&self) -> usize {
+        self.num_rows * self.num_cols * self.bytes_per_element
+    }
+
+    /// Borrows the raw byte slice directly from the memory map without copying
+    pub fn as_bytes(&self) -> Result<&[u8]> {
+        let start = self.byte_offset;
+        let end = start + self.total_bytes();
+        
+        let slice = self.mmap
+            .get(start..end)
+            .ok_or_else(|| {
+                CphdError::IOError(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "Support array out of bounds",
+                ))
+            })?;
+        
+         Ok(slice)
+    }
+}
+
+//impl Iterator for SupportArrayHandle {
+//    type Item = Vec<u8>; 
+//
+//    fn next(&mut self) -> Option<Self::Item> {
+//        if self.current_row >= self.num_rows {
+//            return None;
+//        }
+//
+//        let row_bytes_len = self.num_cols * self.bytes_per_element;
+//        let absolute_offset = self.byte_offset + (self.current_row * row_bytes_len);
+//
+//        let row_slice = self
+//            .mmap
+//            .get(absolute_offset..absolute_offset + row_bytes_len)?;
+//
+//        self.current_row += 1;
+//
+//        // Return the owned row vector (or parse bytes into floats/ints here)
+//        Some(row_slice.to_vec())
+//    }
+//}
+
+impl Iterator for SupportArrayHandle {
+    type Item = Array1<f64>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_row >= self.num_rows {
+            return None;
+        }
+
+        let row_bytes_len = self.num_cols * self.bytes_per_element;
+        let absolute_offset = self.byte_offset + (self.current_row * row_bytes_len);
+
+        let row_slice = self
+            .mmap
+            .get(absolute_offset..absolute_offset + row_bytes_len)?;
+
+        // Parse and byte-swap big-endian bytes into f64 elements
+        let mut samples = Vec::with_capacity(self.num_cols);
+        for chunk in row_slice.chunks_exact(self.bytes_per_element) {
+            // Assuming 8 bytes per element (f64). 
+            // If support arrays can have other sizes, you can add a match on bytes_per_element.
+            let bytes = [
+                chunk[0], chunk[1], chunk[2], chunk[3],
+                chunk[4], chunk[5], chunk[6], chunk[7],
+            ];
+            let val = f64::from_bits(u64::from_be_bytes(bytes));
+            samples.push(val);
+        }
+
+        self.current_row += 1;
+        Some(Array1::from(samples))
     }
 }
 
