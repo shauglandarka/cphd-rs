@@ -1,6 +1,6 @@
 # COMPENSATED PHASE HISTORY DATA (CPHD)
 
-A rust crate for reading and writing NITF CPHD format. Inspired by SIX/Sarpy/Sarkit/MATLAB SAR toolbox.
+A crate for reading and (eventually) writing NITF CPHD format. Inspired by SIX/Sarpy/Sarkit/MATLAB SAR toolbox.
 
 CPHD product is an intermediate data product. The real utility is in the products and
 measurements that may be derived from it. The quality of the phase history signal arrays
@@ -11,10 +11,9 @@ data from many sensors and data processing systems. Sensor independence does not
 that all products have the same format for the signal data arrays or the same set of metadata
 parameters.
 
-This crate doesn't support all of the optional CPHD xml fields yet.
+This crate has not been tested on all of the optional CPHD xml fields yet.
 
 This crate has only been tested on Capella and Umbra single-channel CPHD 1.1.0
-
 
 ```rust
 // Example usage 
@@ -22,8 +21,8 @@ This crate has only been tested on Capella and Umbra single-channel CPHD 1.1.0
 use cphd_rs::{CphdError, read_cphd};
 
 fn main() -> Result<(), CphdError> {
-    //let file_path = "/data1/u/shaugland/CAPELLA_C13_SM_CPHD_HH_20260626121031_20260626121041.cphd";
-    let file_path = "/data1/u/shaugland/2024-06-30-01-42-52_UMBRA-05_CPHD.cphd";
+    //let file_path = "CAPELLA_C13_SM_CPHD_HH_20260626121031_20260626121041.cphd";
+    let file_path = "2024-06-30-01-42-52_UMBRA-05_CPHD.cphd";
 
     // The main file reader
     let mut cphd = read_cphd(file_path.as_ref())?;

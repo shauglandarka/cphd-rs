@@ -47,7 +47,7 @@ pub struct Cphd {
     pub version: CphdVersion,
     pub meta: CphdMeta,
     pub mmap: Arc<Mmap>,
-    pub support_block: Option<Vec<SupportArrayHandle>>, // not tested
+    pub support_block: Option<Vec<SupportArrayHandle>>, 
     pub pvp_iterators: Vec<v1_1_0::pvp::PvpIterator>,
     pub signal_iterators: Vec<SignalIterator>,
 }
