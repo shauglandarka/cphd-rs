@@ -440,33 +440,41 @@ impl Iterator for SignalIterator {
             .mmap
             .get(absolute_offset..absolute_offset + bytes_per_vector)?;
 
-        let mut samples = Vec::with_capacity(self.num_samples);
-
-        match self.signal_format {
+        let samples: Array1<Complex<f32>> = match self.signal_format {
             SignalArrayFormat::CI2 => {
-                for chunk in vector_slice.chunks_exact(2) {
-                    let real = chunk[0] as i8 as f32;
-                    let imag = chunk[1] as i8 as f32;
-                    samples.push(num_complex::Complex::new(real, imag));
-                }
-            }
-            SignalArrayFormat::CI4 => {
-                for chunk in vector_slice.chunks_exact(4) {
-                    let real = i16::from_be_bytes([chunk[0], chunk[1]]) as f32;
-                    let imag = i16::from_be_bytes([chunk[2], chunk[3]]) as f32;
-                    samples.push(num_complex::Complex::new(real, imag));
-                }
-            }
-            SignalArrayFormat::CF8 => {
-                for chunk in vector_slice.chunks_exact(8) {
-                    let real = f32::from_be_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
-                    let imag = f32::from_be_bytes([chunk[4], chunk[5], chunk[6], chunk[7]]);
-                    samples.push(num_complex::Complex::new(real, imag));
-                }
-            }
-        }
-        self.current_vector += 1;
-        Some(ndarray::Array1::from(samples))
+                 vector_slice
+                     .chunks_exact(2)
+                     .map(|chunk| {
+                         let real = chunk[0] as i8 as f32;
+                         let imag = chunk[1] as i8 as f32;
+                         Complex::new(real, imag)
+                     })
+                     .collect()
+             }
+             SignalArrayFormat::CI4 => {
+                 vector_slice
+                     .chunks_exact(4)
+                     .map(|chunk| {
+                         let real = i16::from_be_bytes([chunk[0], chunk[1]]) as f32;
+                         let imag = i16::from_be_bytes([chunk[2], chunk[3]]) as f32;
+                         Complex::new(real, imag)
+                     })
+                     .collect()
+             }
+             SignalArrayFormat::CF8 => {
+                 vector_slice
+                     .chunks_exact(8)
+                     .map(|chunk| {
+                         let real = f32::from_be_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
+                         let imag = f32::from_be_bytes([chunk[4], chunk[5], chunk[6], chunk[7]]);
+                         Complex::new(real, imag)
+                     })
+                     .collect()
+              }
+          };
+          
+          self.current_vector += 1;
+          Some(samples)
     }
 }
 
@@ -501,12 +509,12 @@ impl SupportArrayHandle {
         }
     }
 
-    /// Returns the total expected size of this support array in bytes
+    // Returns the total expected size of this support array in bytes
     pub fn total_bytes(&self) -> usize {
         self.num_rows * self.num_cols * self.bytes_per_element
     }
 
-    /// Borrows the raw byte slice directly from the memory map without copying
+    // Borrows the raw byte slice directly from the memory map without copying
     pub fn as_bytes(&self) -> Result<&[u8]> {
         let start = self.byte_offset;
         let end = start + self.total_bytes();
@@ -524,28 +532,6 @@ impl SupportArrayHandle {
     }
 }
 
-//impl Iterator for SupportArrayHandle {
-//    type Item = Vec<u8>; 
-//
-//    fn next(&mut self) -> Option<Self::Item> {
-//        if self.current_row >= self.num_rows {
-//            return None;
-//        }
-//
-//        let row_bytes_len = self.num_cols * self.bytes_per_element;
-//        let absolute_offset = self.byte_offset + (self.current_row * row_bytes_len);
-//
-//        let row_slice = self
-//            .mmap
-//            .get(absolute_offset..absolute_offset + row_bytes_len)?;
-//
-//        self.current_row += 1;
-//
-//        // Return the owned row vector (or parse bytes into floats/ints here)
-//        Some(row_slice.to_vec())
-//    }
-//}
-
 impl Iterator for SupportArrayHandle {
     type Item = Array1<f64>;
 
@@ -561,31 +547,35 @@ impl Iterator for SupportArrayHandle {
             .mmap
             .get(absolute_offset..absolute_offset + row_bytes_len)?;
 
-        // Parse and byte-swap big-endian bytes into f64 elements
-        let mut samples = Vec::with_capacity(self.num_cols);
-        for chunk in row_slice.chunks_exact(self.bytes_per_element) {
-            // Assuming 8 bytes per element (f64). 
-            // If support arrays can have other sizes, you can add a match on bytes_per_element.
-            let bytes = [
-                chunk[0], chunk[1], chunk[2], chunk[3],
-                chunk[4], chunk[5], chunk[6], chunk[7],
-            ];
-            let val = f64::from_bits(u64::from_be_bytes(bytes));
-            samples.push(val);
-        }
+        // Parse, byte-swap, and collect directly into an Array1<f64>
+        let samples: Array1<f64> = row_slice
+            .chunks_exact(self.bytes_per_element as usize)
+            .map(|chunk| {
+                match self.bytes_per_element {
+                    8 => {
+                        let bytes = [
+                            chunk[0], chunk[1], chunk[2], chunk[3],
+                            chunk[4], chunk[5], chunk[6], chunk[7],
+                        ];
+                        f64::from_bits(u64::from_be_bytes(bytes))
+                    }
+                    4 => {
+                        let bytes = [chunk[0], chunk[1], chunk[2], chunk[3]];
+                        // Parse as 4-byte big-endian float and promote to f64
+                        f32::from_bits(u32::from_be_bytes(bytes)) as f64
+                    }
+                    2 => {
+                        let bytes = [chunk[0], chunk[1]];
+                        // Parse as 2-byte big-endian integer (if applicable) and cast to f64
+                        i16::from_be_bytes(bytes) as f64
+                    }
+                    other => panic!("Unsupported bytes_per_element: {}", other),
+                }
+            })
+            .collect();
 
         self.current_row += 1;
         Some(Array1::from(samples))
     }
 }
 
-//#[cfg(test)]
-//mod tests {
-//    use super::*;
-//
-//    #[test]
-//    fn it_works() {
-//        let result = add(2, 2);
-//        assert_eq!(result, 4);
-//    }
-//}

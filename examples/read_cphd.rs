@@ -30,7 +30,7 @@ fn main() -> Result<(), CphdError> {
                 println!("  Row {}: length {}", row_idx, row_vector.len());
                 // Print the first few parsed f64 values directly from the ndarray
                 let slice = row_vector.as_slice().unwrap();
-                println!("    First few values: {:?}", &slice[..slice.len().min(5)]);
+                println!("    First few values: {:?}", &slice[..slice.len().min(3)]);
             }
         }
     }
@@ -42,6 +42,7 @@ fn main() -> Result<(), CphdError> {
         // .take(3) yields the first three rows for each channel. 
         for (i, pvp_set) in pvp_iter.enumerate().take(3) {
             println!("  Set {}: tx_time = {}", i + 1, pvp_set.tx_time); // Grab whatever you want
+            println!("  Set {}: rcv_time = {}", i + 1, pvp_set.rcv_time); // Grab whatever you want
         }
     }
 
